@@ -1,9 +1,50 @@
 const path = require('path');
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const isDev = process.env.NODE_ENV === 'development';
+
+const jsLoader = () => {
+	const loaders = [{
+		loader: 'babel-loader',
+		options: {
+			presets: ['@babel/preset-env'],
+			plugins: ['@babel/plugin-transform-runtime']
+		}
+	}];
+
+	if (isDev) {
+		loaders.push('eslint-loader');
+	}
+
+	return loaders;
+}
+
+const cssLoader = (extra) => {
+	const loaders = [
+		MiniCssExtractPlugin.loader,
+		{ 
+			loader: 'css-loader', 
+			options: { 
+				sourceMap: true 
+			} 
+		}
+	];
+
+	if (extra) {
+		let extraLoader = { 
+    		loader: 'sass-loader', 
+    		options: { 
+    			sourceMap: true 
+    		} 
+    	};
+		loaders.push(extraLoader);
+	}	
+
+	return loaders;
+}
 
 module.exports = {
 	context: path.resolve(__dirname, 'src'),
@@ -28,7 +69,8 @@ module.exports = {
 			{
 				filename: '[name].css',	
 			}
-		)
+		),
+		new CleanWebpackPlugin(),
 	],
 	optimization: {
 	    minimize: true,
@@ -60,46 +102,23 @@ module.exports = {
 			{
 				test: /\.js$/,
 				exclude: /(node_modules|bower_components)/,
-				use: [
-					{
-						loader: 'babel-loader',
-						options: {
-							presets: ['@babel/preset-env'],
-							plugins: ['@babel/plugin-transform-runtime']
-						}
-					}
-				]
+				use: jsLoader()
 			},
 			{ 
 				test: /\.css$/, 
-				use: [
-					MiniCssExtractPlugin.loader,
-		        	{ 
-		        		loader: 'css-loader', 
-		        		options: { 
-		        			sourceMap: true 
-		        		} 
-		        	},
-				] 
+				use: cssLoader() 
 			},
 			{
-				test: /\.s[ac]ss$/i,
-				use: [
-					MiniCssExtractPlugin.loader,
-		        	{ 
-		        		loader: 'css-loader', 
-		        		options: { 
-		        			sourceMap: true 
-		        		} 
-		        	},
-		        	{ 
-		        		loader: 'sass-loader', 
-		        		options: { 
-		        			sourceMap: true 
-		        		} 
-		        	},
-				]
-			}
+				test: /\.s[ac]ss$/,
+				use: cssLoader('sass-loader')
+			},
+			{
+	        	test: /\.(ttf|woff|woff2|eot)$/,
+	        	type: 'asset/resource',
+	        	generator: {
+		        	filename: 'fonts/[name][ext]'
+		       	}
+	      	},
 		]
 	}
 }
