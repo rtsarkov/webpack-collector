@@ -1,9 +1,6 @@
+import Vue from 'vue';
+import Example from './js/Example';
 
-// import './styles/style.css';
-// import './styles/style.scss'
-
-import './js/test';
-
-
-console.log('test');
-console.log('test');
+new Vue({
+    render: h => h(Example)
+}).$mount('#calculate-delivery');

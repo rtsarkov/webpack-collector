@@ -1,14 +1,5 @@
-@charset "UTF-8";
+@import "styles/**/*";
 
-
-@import "../node_modules/jquery-colorbox/example1/colorbox.css";
-
-
-.block{
-	width: 200px;
-
-	&__full {
-		width: 100%;
-		color: rgb(131, 51, 51);
-	}
+body {
+	color: red;
 }
