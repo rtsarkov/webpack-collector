@@ -1,35 +1,53 @@
 const path = require('path');
+const fs = require('fs');
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const {CleanWebpackPlugin} = require('clean-webpack-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const htmlPlugin = require('html-webpack-plugin');
 const globImporter = require('node-sass-glob-importer');
+const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
 const {
     VueLoaderPlugin
-  } = require('vue-loader');
+} = require('vue-loader');
 
+
+// Путь куда собирать
+const outPath = path.resolve(__dirname, 'local/templates/main/assets');
+
+
+
+
+// ********* Configs **********
+// const htmlPathPages = path.resolve(__dirname, 'src/pages');
+const htmlPages = fs
+    .readdirSync(path.resolve(__dirname, 'src/pages'))
+    .filter(fileName => (fileName.endsWith('.html')));
 
 module.exports = (env = {}, argv) => {
     const isDev = argv.mode === 'development';
+    const mode = argv.mode === 'development' ? 'development' : 'production';
     const config = {
         context: path.resolve(__dirname, 'src'),
-        mode: argv.mode,
+        mode: 'development',
         devtool: (() => (isDev ? 'source-map' : 'nosources-source-map'))(),
         entry: [
-            './index.js',
-            './style.scss'
+            // './js/app.js',
+            // './styles/app.scss'
+            'index.js',
+            './styles/app.scss'
         ],
         resolve: {
             modules: [path.resolve(__dirname, 'src'), 'node_modules'],
-            extensions: ['.js', '.json', '.vue'],
+            extensions: ['.js', '.json', '.vue', '.scss'],
             alias: {
-                '@module': path.resolve(__dirname, 'src/moduls'),
                 '@': path.resolve(__dirname, 'src')
             }
         },
+        target: 'web',
         output: {
             filename: 'main.js', // Выходной файл js
             path: path.resolve(__dirname, 'local/templates/main/assets'), // Директория сборки
+            publicPath: '',
         },
         plugins: [
             new MiniCssExtractPlugin(
@@ -43,13 +61,22 @@ module.exports = (env = {}, argv) => {
                 jQuery: "jquery",
                 'window.jQuery': "jquery"
             }),
-            new VueLoaderPlugin()
-            
+            new VueLoaderPlugin(),
+            ...htmlPages.map(page => new htmlPlugin({
+                template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
+                filename: `${page.split('.')[0]}.html`
+            })),
+            new SpriteLoaderPlugin({
+                extract: true,
+                spriteFilename: svgPath => `sprite${svgPath.substr(-4)}`
+            }),
+
         ],
         optimization: {},
         devServer: {
-            port: 4200,
-            hot: isDev
+            open: true,
+            watchFiles: ["./src/*"],
+            hot: true,
         },
         devtool: !isDev ? 'hidden-source-map' : 'source-map',
         module: {
@@ -77,6 +104,9 @@ module.exports = (env = {}, argv) => {
                             options: {
                                 sourceMap: isDev
                             }
+                        },
+                        {
+                            loader: 'vue-style-loader'
                         }
                     ]
                 },
@@ -91,32 +121,29 @@ module.exports = (env = {}, argv) => {
                             }
                         },
                         {
-                            loader: 'postcss-loader',
-                            options: {
-                            implementation: require("postcss"),
-                            },
+                            loader: 'postcss-loader'
                         },
                         {
                             loader: 'sass-loader',
-                            options: {                
+                            options: {
                                 sassOptions: {
                                     importer: globImporter()
                                 }
                             }
-                        }                 
+                        }
                     ]
                 },
                 {
-                    test: /.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
+                    test: /\.(ttf|otf|eot|woff(2)?)(\?[a-z0-9]+)?$/,
                     use: [{
                         loader: 'file-loader',
                         options: {
-                            name: 'fonts/[name].[ext]',                            
+                            name: 'fonts/[name].[ext]',
                         }
                     }]
                 },
                 {
-                    test: /\.(jpg|jpeg|png|gif|svg)$/,
+                    test: /\.(jpg|jpeg|png|gif)$/,
                     use: [{
                         loader: 'file-loader',
                         options: {
@@ -124,6 +151,23 @@ module.exports = (env = {}, argv) => {
                         }
                     }],
                 },
+                {
+                    test: /\.svg$/,
+                    use: {
+                        loader: 'svg-sprite-loader'
+                    }
+                },
+                {
+                    test: /\.html$/,
+                    use: {
+                        loader: 'html-loader',
+                        options: {
+                            preprocessor: (content, loaderContext) =>
+                                content.replace(/\<include src=\"(.+)\"\/?\>(?:\<\/include\>)?/gi,
+                                    (m, src) => fs.readFileSync(path.resolve(loaderContext.context, src), 'utf8'))
+                        },
+                    },
+                }
             ]
         }
     }
