@@ -31,14 +31,12 @@ module.exports = (env = {}, argv) => {
         mode: 'development',
         devtool: (() => (isDev ? 'source-map' : 'nosources-source-map'))(),
         entry: [
-            // './js/app.js',
-            // './styles/app.scss'
-            'index.js',
+            './js/app.js',
             './styles/app.scss'
         ],
         resolve: {
             modules: [path.resolve(__dirname, 'src'), 'node_modules'],
-            extensions: ['.js', '.json', '.vue', '.scss'],
+            extensions: ['.js', '.json', '.vue', '.scss', '.html'],
             alias: {
                 '@': path.resolve(__dirname, 'src')
             }
@@ -75,7 +73,7 @@ module.exports = (env = {}, argv) => {
         optimization: {},
         devServer: {
             open: true,
-            watchFiles: ["./src/*"],
+            watchFiles: ["src/**/*"],
             hot: true,
         },
         devtool: !isDev ? 'hidden-source-map' : 'source-map',
