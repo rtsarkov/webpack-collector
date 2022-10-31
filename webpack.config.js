@@ -4,7 +4,6 @@ const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const htmlPlugin = require('html-webpack-plugin');
-const globImporter = require('node-sass-glob-importer');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
 const {
     VueLoaderPlugin
@@ -12,13 +11,12 @@ const {
 
 
 // Путь куда собирать
-const outPath = path.resolve(__dirname, 'local/templates/main/assets');
-
-
+const outPath = path.resolve(__dirname, '../local/templates/main/dist');
 
 
 // ********* Configs **********
-// const htmlPathPages = path.resolve(__dirname, 'src/pages');
+
+// Сборка html, страницы для сборки
 const htmlPages = fs
     .readdirSync(path.resolve(__dirname, 'src/pages'))
     .filter(fileName => (fileName.endsWith('.html')));
@@ -28,12 +26,14 @@ module.exports = (env = {}, argv) => {
     const mode = argv.mode === 'development' ? 'development' : 'production';
     const config = {
         context: path.resolve(__dirname, 'src'),
-        mode: 'development',
+        mode: mode,
         devtool: (() => (isDev ? 'source-map' : 'nosources-source-map'))(),
-        entry: [
-            './js/app.js',
-            './styles/app.scss'
-        ],
+        entry: {
+            app: [
+                './js/app.js',
+                './styles/app.scss',
+            ]
+        },
         resolve: {
             modules: [path.resolve(__dirname, 'src'), 'node_modules'],
             extensions: ['.js', '.json', '.vue', '.scss', '.html'],
@@ -43,14 +43,14 @@ module.exports = (env = {}, argv) => {
         },
         target: 'web',
         output: {
-            filename: 'main.js', // Выходной файл js
-            path: path.resolve(__dirname, 'local/templates/main/assets'), // Директория сборки
+            filename: 'scripts/[name].js', // Выходной файл js
+            path: outPath, // Директория сборки
             publicPath: '',
         },
         plugins: [
             new MiniCssExtractPlugin(
                 {
-                    filename: 'main.css', // выходной файл css
+                    filename: "styles/[name].css"
                 }
             ),
             new CleanWebpackPlugin(),
@@ -60,7 +60,10 @@ module.exports = (env = {}, argv) => {
                 'window.jQuery': "jquery"
             }),
             new VueLoaderPlugin(),
+            // Сборка html
             ...htmlPages.map(page => new htmlPlugin({
+                minimize: false,
+                sources: false,
                 template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
                 filename: `${page.split('.')[0]}.html`
             })),
@@ -111,7 +114,12 @@ module.exports = (env = {}, argv) => {
                 {
                     test: /\.s[ac]ss$/,
                     use: [
-                        MiniCssExtractPlugin.loader,
+                        {
+                            loader: MiniCssExtractPlugin.loader,
+                            options: {
+                                publicPath: '../',
+                            }
+                        },
                         {
                             loader: 'css-loader',
                             options: {
@@ -119,16 +127,22 @@ module.exports = (env = {}, argv) => {
                             }
                         },
                         {
-                            loader: 'postcss-loader'
+                            loader: 'postcss-loader',
+                            options: {
+                                postcssOptions: {
+                                    plugins: [
+                                        "autoprefixer"
+                                    ]
+                                },
+                                sourceMap: isDev
+                            }
                         },
                         {
                             loader: 'sass-loader',
                             options: {
-                                sassOptions: {
-                                    importer: globImporter()
-                                }
+                                sourceMap: isDev
                             }
-                        }
+                        },
                     ]
                 },
                 {
@@ -142,12 +156,35 @@ module.exports = (env = {}, argv) => {
                 },
                 {
                     test: /\.(jpg|jpeg|png|gif)$/,
-                    use: [{
-                        loader: 'file-loader',
-                        options: {
-                            name: 'images/[name].[ext]',
-                        }
-                    }],
+                    type: 'asset/resource',
+                    generator: {
+                        filename: 'images/[name].[ext]',
+                    },
+                    use: [
+                        {
+                            loader: 'image-webpack-loader',
+                            options: {
+                                mozjpeg: {
+                                    progressive: true,
+                                },
+                                // optipng.enabled: false will disable optipng
+                                optipng: {
+                                    enabled: false,
+                                },
+                                pngquant: {
+                                    quality: [0.65, 0.90],
+                                    speed: 4
+                                },
+                                gifsicle: {
+                                    interlaced: false,
+                                },
+                                // the webp option will enable WEBP
+                                webp: {
+                                    quality: 75
+                                }
+                            },
+                        },
+                    ],
                 },
                 {
                     test: /\.svg$/,
@@ -160,6 +197,7 @@ module.exports = (env = {}, argv) => {
                     use: {
                         loader: 'html-loader',
                         options: {
+                            minimize: false,
                             preprocessor: (content, loaderContext) =>
                                 content.replace(/\<include src=\"(.+)\"\/?\>(?:\<\/include\>)?/gi,
                                     (m, src) => fs.readFileSync(path.resolve(loaderContext.context, src), 'utf8'))

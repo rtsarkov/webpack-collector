@@ -1,6 +1,9 @@
 @import "@fancyapps/ui/dist/fancybox.css";
 
+
 body {
+	display: flex;
+	justify-content: center;
 	color: red;
 	background-image: url('@/images/logo.jpg');
 }
