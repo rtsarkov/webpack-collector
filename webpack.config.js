@@ -11,7 +11,7 @@ const {
 
 
 // Путь куда собирать
-const outPath = path.resolve(__dirname, '../local/templates/main/dist');
+const outPath = path.resolve(__dirname, 'local/templates/main/dist');
 
 
 // ********* Configs **********
