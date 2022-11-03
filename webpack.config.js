@@ -5,6 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const htmlPlugin = require('html-webpack-plugin');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
+const BrowserSyncPlugin = require('browser-sync-webpack-plugin')
 const {
     VueLoaderPlugin
 } = require('vue-loader');
@@ -53,8 +54,7 @@ module.exports = (env = {}, argv) => {
                 {
                     filename: "styles/[name].css"
                 }
-            ),
-            new CleanWebpackPlugin(),
+            ),            
             new webpack.ProvidePlugin({
                 $: "jquery",
                 jQuery: "jquery",
@@ -75,17 +75,16 @@ module.exports = (env = {}, argv) => {
             }),
         ];
         const production = [
-            new plugins.clean(['dist']),            
+            new CleanWebpackPlugin(),          
           ];
     
           const development = [
-            new plugins.sync({
+            new BrowserSyncPlugin({
               host: 'localhost',
               port: 3000,
-              proxy: 'http://localhost:8080/',
-            }, {
-              reload: false,
-            },),
+            //   proxy: 'http://localhost:8080/',
+                server: { baseDir: [outPath] }
+            }),
           ];
         return isDev ? 
             common.concat(development) :
@@ -94,7 +93,7 @@ module.exports = (env = {}, argv) => {
         })(),
         optimization: {},
         devServer: {
-            open: true,
+            open: false,
             watchFiles: path.join(__dirname, 'src'),
             hot: true,
         },
