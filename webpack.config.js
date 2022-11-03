@@ -47,7 +47,8 @@ module.exports = (env = {}, argv) => {
             path: outPath, // Директория сборки
             publicPath: '',
         },
-        plugins: [
+        plugins: (() => {
+            const common = [
             new MiniCssExtractPlugin(
                 {
                     filename: "styles/[name].css"
@@ -64,19 +65,37 @@ module.exports = (env = {}, argv) => {
             ...htmlPages.map(page => new htmlPlugin({
                 minimize: false,
                 sources: false,
+                publicPath: '../',
                 template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
-                filename: `${page.split('.')[0]}.html`
+                filename: `static/${page.split('.')[0]}.html`
             })),
             new SpriteLoaderPlugin({
                 extract: true,
                 spriteFilename: svgPath => `sprite${svgPath.substr(-4)}`
             }),
+        ];
+        const production = [
+            new plugins.clean(['dist']),            
+          ];
+    
+          const development = [
+            new plugins.sync({
+              host: 'localhost',
+              port: 3000,
+              proxy: 'http://localhost:8080/',
+            }, {
+              reload: false,
+            },),
+          ];
+        return isDev ? 
+            common.concat(development) :
+            common.concat(production);
 
-        ],
+        })(),
         optimization: {},
         devServer: {
             open: true,
-            watchFiles: ["src/**/*"],
+            watchFiles: path.join(__dirname, 'src'),
             hot: true,
         },
         devtool: !isDev ? 'hidden-source-map' : 'source-map',
