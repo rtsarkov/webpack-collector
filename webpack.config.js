@@ -5,6 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const htmlPlugin = require('html-webpack-plugin');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
+const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 
 const {
     VueLoaderPlugin
@@ -48,13 +49,13 @@ module.exports = (env = {}, argv) => {
             path: outPath, // Директория сборки
             publicPath: '',
         },
-        plugins: [
+        plugins: (() => {
+            const common = [
             new MiniCssExtractPlugin(
                 {
                     filename: "styles/[name].css"
                 }
-            ),
-            new CleanWebpackPlugin(),
+            ),            
             new webpack.ProvidePlugin({
                 $: "jquery",
                 jQuery: "jquery",
@@ -65,6 +66,7 @@ module.exports = (env = {}, argv) => {
             ...htmlPages.map(page => new htmlPlugin({
                 minimize: false,
                 sources: false,
+                publicPath: '../',
                 template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
                 filename: `static/${page.split('.')[0]}.html`
             })),
@@ -72,12 +74,28 @@ module.exports = (env = {}, argv) => {
                 extract: true,
                 spriteFilename: svgPath => `sprite${svgPath.substr(-4)}`
             }),
+        ];
+        const production = [
+            new CleanWebpackPlugin(),          
+          ];
+    
+          const development = [
+            new BrowserSyncPlugin({
+              host: 'localhost',
+              port: 3000,
+            //   proxy: 'http://localhost:8080/',
+                server: { baseDir: [outPath] }
+            }),
+          ];
+        return isDev ? 
+            common.concat(development) :
+            common.concat(production);
 
-        ],
+        })(),
         optimization: {},
         devServer: {
-            open: true,
-            watchFiles: ["src/**/*"],
+            open: false,
+            watchFiles: path.join(__dirname, 'src'),
             hot: true,
         },
         devtool: !isDev ? 'hidden-source-map' : 'source-map',
