@@ -5,13 +5,14 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const htmlPlugin = require('html-webpack-plugin');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
+
 const {
     VueLoaderPlugin
 } = require('vue-loader');
 
 
 // Путь куда собирать
-const outPath = path.resolve(__dirname, '../local/templates/main/dist');
+const outPath = path.resolve(__dirname, 'local/templates/main/dist');
 
 
 // ********* Configs **********
@@ -65,7 +66,7 @@ module.exports = (env = {}, argv) => {
                 minimize: false,
                 sources: false,
                 template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
-                filename: `${page.split('.')[0]}.html`
+                filename: `static/${page.split('.')[0]}.html`
             })),
             new SpriteLoaderPlugin({
                 extract: true,
