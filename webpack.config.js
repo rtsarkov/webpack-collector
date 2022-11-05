@@ -2,10 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const htmlPlugin = require('html-webpack-plugin');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
-const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 
 const {
     VueLoaderPlugin
@@ -33,8 +31,8 @@ module.exports = (env = {}, argv) => {
         entry: {
             app: [
                 './js/app.js',
-                './styles/app.scss',
-            ]
+                './styles/template_styles.scss'
+            ]            
         },
         resolve: {
             modules: [path.resolve(__dirname, 'src'), 'node_modules'],
@@ -51,50 +49,47 @@ module.exports = (env = {}, argv) => {
         },
         plugins: (() => {
             const common = [
-            new MiniCssExtractPlugin(
+                new MiniCssExtractPlugin(
+                    {
+                        filename: "template_styles.css",
+                    }
+                ),
+                new webpack.ProvidePlugin({
+                    $: "jquery",
+                    jQuery: "jquery",
+                    'window.jQuery': "jquery"
+                }),
+                new VueLoaderPlugin(),
+                // Сборка html
+                ...htmlPages.map(page => new htmlPlugin({
+                    minimize: false,
+                    sources: false,
+                    publicPath: '../',
+                    template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
+                    filename: `static/${page.split('.')[0]}.html`
+                })),
+                new SpriteLoaderPlugin(
                 {
-                    filename: "styles/[name].css"
-                }
-            ),            
-            new webpack.ProvidePlugin({
-                $: "jquery",
-                jQuery: "jquery",
-                'window.jQuery': "jquery"
-            }),
-            new VueLoaderPlugin(),
-            // Сборка html
-            ...htmlPages.map(page => new htmlPlugin({
-                minimize: false,
-                sources: false,
-                publicPath: '../',
-                template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
-                filename: `static/${page.split('.')[0]}.html`
-            })),
-            new SpriteLoaderPlugin({
-                extract: true,
-                spriteFilename: svgPath => `sprite${svgPath.substr(-4)}`
-            }),
-        ];
-        const production = [
-            new CleanWebpackPlugin(),          
-          ];
-    
-          const development = [
-            new BrowserSyncPlugin({
-              host: 'localhost',
-              port: 3000,
-            //   proxy: 'http://localhost:8080/',
-                server: { baseDir: [outPath] }
-            }),
-          ];
-        return isDev ? 
-            common.concat(development) :
-            common.concat(production);
+                    plainSprite: true
+                  }
+                ),
+            ];
+            const production = [
+               
+            ];
+
+            const development = [
+
+            ];
+            return isDev ?
+                common.concat(development) :
+                common.concat(production);
 
         })(),
         optimization: {},
         devServer: {
-            open: false,
+            port: 8080,
+            open: true,
             watchFiles: path.join(__dirname, 'src'),
             hot: true,
         },
@@ -136,7 +131,7 @@ module.exports = (env = {}, argv) => {
                         {
                             loader: MiniCssExtractPlugin.loader,
                             options: {
-                                publicPath: '../',
+                                publicPath: '',
                             }
                         },
                         {
@@ -166,18 +161,17 @@ module.exports = (env = {}, argv) => {
                 },
                 {
                     test: /\.(ttf|otf|eot|woff(2)?)(\?[a-z0-9]+)?$/,
-                    use: [{
-                        loader: 'file-loader',
-                        options: {
-                            name: 'fonts/[name].[ext]',
-                        }
-                    }]
-                },
-                {
-                    test: /\.(jpg|jpeg|png|gif)$/,
                     type: 'asset/resource',
                     generator: {
-                        filename: 'images/[name].[ext]',
+                        filename: 'fonts/[name][ext]',
+                    }
+                },
+                {
+                    test: /\.(jpg|jpeg|png|gif|svg)$/,
+                    type: 'asset/resource',
+                    include: path.resolve(__dirname, 'src', 'images'),
+                    generator: {
+                        filename: 'images/[name][ext]',
                     },
                     use: [
                         {
@@ -207,9 +201,15 @@ module.exports = (env = {}, argv) => {
                 },
                 {
                     test: /\.svg$/,
-                    use: {
-                        loader: 'svg-sprite-loader'
-                    }
+                    include: path.resolve(__dirname, 'src', 'svg'),
+                    use: [{
+                        loader: 'svg-sprite-loader',
+                        options: {
+                            extract: false
+                          }
+                        },
+                        'svgo-loader'
+                    ]
                 },
                 {
                     test: /\.html$/,
