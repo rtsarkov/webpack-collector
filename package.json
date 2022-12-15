@@ -73,5 +73,8 @@
   },
   "browserslist": [
     "last 3 version"
-  ]
+  ],
+  "dependencies": {
+    "vue-router": "^4.1.6"
+  }
 }

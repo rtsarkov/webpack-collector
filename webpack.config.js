@@ -32,7 +32,10 @@ module.exports = (env = {}, argv) => {
             app: [
                 './js/app.js',
                 './styles/template_styles.scss'
-            ]            
+            ],
+            layout: [
+                './js/layout/layout.js'
+            ]
         },
         resolve: {
             modules: [path.resolve(__dirname, 'src'), 'node_modules'],
@@ -68,6 +71,13 @@ module.exports = (env = {}, argv) => {
                     template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
                     filename: `static/${page.split('.')[0]}.html`
                 })),
+                new htmlPlugin({
+                    minimize: false,
+                    sources: false,
+                    publicPath: '../../',
+                    template: `${path.resolve(__dirname, 'src/index.html')}`,
+                    filename: `static/layout/index.html`
+                }),
                 new SpriteLoaderPlugin(
                 {
                     plainSprite: true
@@ -90,6 +100,12 @@ module.exports = (env = {}, argv) => {
         devServer: {
             port: 8080,
             open: true,
+            proxy: {
+                '/static/layout': {
+                  target: 'http://localhost:8080/static/layout/',
+                  pathRewrite: { '^/static/layout/': '' },
+                },
+              },            
             watchFiles: path.join(__dirname, 'src'),
             hot: true,
         },
@@ -217,9 +233,9 @@ module.exports = (env = {}, argv) => {
                         loader: 'html-loader',
                         options: {
                             minimize: false,
-                            preprocessor: (content, loaderContext) =>
-                                content.replace(/\<include src=\"(.+)\"\/?\>(?:\<\/include\>)?/gi,
-                                    (m, src) => fs.readFileSync(path.resolve(loaderContext.context, src), 'utf8'))
+                            // preprocessor: (content, loaderContext) =>
+                            //     content.replace(/\<include src=\"(.+)\"\/?\>(?:\<\/include\>)?/gi,
+                            //         (m, src) => fs.readFileSync(path.resolve(loaderContext.context, src), 'utf8'))
                         },
                     },
                 }
