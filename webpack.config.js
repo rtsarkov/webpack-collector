@@ -9,23 +9,25 @@ const {
     VueLoaderPlugin
 } = require('vue-loader');
 
-// Путь куда собирать
+// ********* Setting ********** //
+// Путь куда собирать исходники
 const outPath = path.resolve(__dirname, 'local/templates/main/dist');
+
 // Дополнительные точки сборки
+// layout нужен для верстки через vuejs
 const additionEntry = {
-    layout: [
-        './layout/layout.js'
-    ]
+    // layout: [
+    //     './layout/layout.js'
+    // ]
 }
-
-
-
-// ********* Configs **********
 // Сборка html, страницы для сборки
-const htmlPages = fs
-    .readdirSync(path.resolve(__dirname, 'src/html'))
-    .filter(fileName => (fileName.endsWith('.html')));
+// const htmlPages = fs
+//     .readdirSync(path.resolve(__dirname, 'src/html'))
+//     .filter(fileName => (fileName.endsWith('.html')));
 
+
+
+// ********* Configs ********** //
 module.exports = (env = {}, argv) => {
     const isDev = argv.mode === 'development';
     const mode = argv.mode === 'development' ? 'development' : 'production';
@@ -68,27 +70,36 @@ module.exports = (env = {}, argv) => {
                     'window.jQuery': "jquery"
                 }),
                 new VueLoaderPlugin(),
-                // Сборка html
-                ...htmlPages.map(page => new htmlPlugin({
-                    minimize: false,
-                    sources: false,
-                    publicPath: '../',
-                    template: `${path.resolve(__dirname, 'src/html')}/${page}`,
-                    filename: `html/${page.split('.')[0]}.html`
-                })),
-                new htmlPlugin({
-                    minimize: false,
-                    sources: false,
-                    publicPath: '',
-                    template: `${path.resolve(__dirname, 'src/index.html')}`,
-                    filename: `index.html`
-                }),
                 new SpriteLoaderPlugin(
                     {
                         plainSprite: true
                     }
                 ),
             ];
+            if ('layout' in additionEntry) {
+                common.concat([
+                    new htmlPlugin({
+                        minimize: false,
+                        sources: false,
+                        publicPath: '',
+                        template: `${path.resolve(__dirname, 'src/index.html')}`,
+                        filename: `index.html`
+                    })
+                ]);
+            }
+
+            if (typeof htmlPages !== 'undefined') {
+                // Сборка html
+                common.concat([
+                    ...htmlPages.map(page => new htmlPlugin({
+                        minimize: false,
+                        sources: false,
+                        publicPath: '../',
+                        template: `${path.resolve(__dirname, 'src/html')}/${page}`,
+                        filename: `html/${page.split('.')[0]}.html`
+                    }))
+                ]);
+            }
             const production = [
 
             ];
@@ -108,7 +119,7 @@ module.exports = (env = {}, argv) => {
             historyApiFallback: true,
             hot: true,
         },
-        devtool: !isDev ? 'hidden-source-map' : 'source-map',
+        devtool: !isDev ? 'hidden-source-map' : 'inline-source-map',
         module: {
             rules: [
                 {
