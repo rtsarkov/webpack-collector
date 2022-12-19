@@ -3,7 +3,8 @@ import Home from '../views/Home.vue'
 import About from '../views/About.vue'
 
 const router = createRouter({
-  history: createWebHistory('/static/layout'),
+  history: createWebHistory(),
+  mode: 'history',
   routes: [
     {
       path: '/',

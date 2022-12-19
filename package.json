@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "webpack --mode development",
     "prod": "webpack --mode production",
-    "watch": "webpack watch --mode development --env development",
-    "server": "webpack serve --mode development --env development",
+    "watch": "webpack watch --mode development",
+    "server": "webpack serve --mode development",
     "eslint": "eslint ./src/js/*",
     "stylelint": "stylelint ./src/styles/*"
   },

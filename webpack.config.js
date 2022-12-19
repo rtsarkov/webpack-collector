@@ -9,16 +9,21 @@ const {
     VueLoaderPlugin
 } = require('vue-loader');
 
-
 // Путь куда собирать
 const outPath = path.resolve(__dirname, 'local/templates/main/dist');
+// Дополнительные точки сборки
+const additionEntry = {
+    layout: [
+        './layout/layout.js'
+    ]
+}
+
 
 
 // ********* Configs **********
-
 // Сборка html, страницы для сборки
 const htmlPages = fs
-    .readdirSync(path.resolve(__dirname, 'src/pages'))
+    .readdirSync(path.resolve(__dirname, 'src/html'))
     .filter(fileName => (fileName.endsWith('.html')));
 
 module.exports = (env = {}, argv) => {
@@ -28,15 +33,15 @@ module.exports = (env = {}, argv) => {
         context: path.resolve(__dirname, 'src'),
         mode: mode,
         devtool: (() => (isDev ? 'source-map' : 'nosources-source-map'))(),
-        entry: {
-            app: [
-                './js/app.js',
-                './styles/template_styles.scss'
-            ],
-            layout: [
-                './js/layout/layout.js'
-            ]
-        },
+        entry: (() => {
+            const common = {
+                app: [
+                    './js/app.js',
+                    './styles/template_styles.scss'
+                ],
+            }
+            return Object.assign(common, additionEntry);
+        })(),
         resolve: {
             modules: [path.resolve(__dirname, 'src'), 'node_modules'],
             extensions: ['.js', '.json', '.vue', '.scss', '.html'],
@@ -68,24 +73,24 @@ module.exports = (env = {}, argv) => {
                     minimize: false,
                     sources: false,
                     publicPath: '../',
-                    template: `${path.resolve(__dirname, 'src/pages')}/${page}`,
-                    filename: `static/${page.split('.')[0]}.html`
+                    template: `${path.resolve(__dirname, 'src/html')}/${page}`,
+                    filename: `html/${page.split('.')[0]}.html`
                 })),
                 new htmlPlugin({
                     minimize: false,
                     sources: false,
-                    publicPath: '../../',
+                    publicPath: '',
                     template: `${path.resolve(__dirname, 'src/index.html')}`,
-                    filename: `static/layout/index.html`
+                    filename: `index.html`
                 }),
                 new SpriteLoaderPlugin(
-                {
-                    plainSprite: true
-                  }
+                    {
+                        plainSprite: true
+                    }
                 ),
             ];
             const production = [
-               
+
             ];
 
             const development = [
@@ -100,13 +105,7 @@ module.exports = (env = {}, argv) => {
         devServer: {
             port: 8080,
             open: true,
-            proxy: {
-                '/static/layout': {
-                  target: 'http://localhost:8080/static/layout/',
-                  pathRewrite: { '^/static/layout/': '' },
-                },
-              },            
-            watchFiles: path.join(__dirname, 'src'),
+            historyApiFallback: true,
             hot: true,
         },
         devtool: !isDev ? 'hidden-source-map' : 'source-map',
@@ -222,8 +221,8 @@ module.exports = (env = {}, argv) => {
                         loader: 'svg-sprite-loader',
                         options: {
                             extract: false
-                          }
-                        },
+                        }
+                    },
                         'svgo-loader'
                     ]
                 },
