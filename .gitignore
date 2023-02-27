@@ -1,6 +1,7 @@
 node_modules
 bower_components
 local
+package-lock.json
 
 *.sublime-project
 *.sublime-workspace

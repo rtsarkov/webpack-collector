@@ -58,7 +58,7 @@ module.exports = (env = {}, argv) => {
             publicPath: '',
         },
         plugins: (() => {
-            const common = [
+            let common = [
                 new MiniCssExtractPlugin(
                     {
                         filename: "template_styles.css",
@@ -77,7 +77,7 @@ module.exports = (env = {}, argv) => {
                 ),
             ];
             if ('layout' in additionEntry) {
-                common.concat([
+                common = common.concat([
                     new htmlPlugin({
                         minimize: false,
                         sources: false,
@@ -90,7 +90,7 @@ module.exports = (env = {}, argv) => {
 
             if (typeof htmlPages !== 'undefined') {
                 // Сборка html
-                common.concat([
+                common = common.concat([
                     ...htmlPages.map(page => new htmlPlugin({
                         minimize: false,
                         sources: false,
@@ -114,7 +114,7 @@ module.exports = (env = {}, argv) => {
         })(),
         optimization: {},
         devServer: {
-            port: 8080,
+            port: 9000,
             open: true,
             historyApiFallback: true,
             hot: true,
